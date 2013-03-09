@@ -45,7 +45,6 @@ module Anemone
       @depth = params[:depth] || 0
       @redirect_to = to_absolute(params[:redirect_to])
       @response_time = params[:response_time]
-      @body = params[:body]
       @error = params[:error]
 
       @fetched = !params[:code].nil?
@@ -74,7 +73,6 @@ module Anemone
     #
     def doc
       return @doc if @doc
-      @doc = Nokogiri::HTML(@body) if @body && html? rescue nil
     end
 
     #
@@ -140,7 +138,7 @@ module Anemone
         href = doc.search('//head/base/@href')
         URI(href.to_s) unless href.nil? rescue nil
       end unless @base
-      
+
       return nil if @base && @base.to_s().empty?
       @base
     end
@@ -173,19 +171,16 @@ module Anemone
     end
 
     def marshal_dump
-      [@url, @headers, @data, @body, @links, @code, @visited, @depth, @referer, @redirect_to, @response_time, @fetched]
+      [@url, @links, @code, @visited, @depth, @referer, @redirect_to, @response_time, @fetched]
     end
 
     def marshal_load(ary)
-      @url, @headers, @data, @body, @links, @code, @visited, @depth, @referer, @redirect_to, @response_time, @fetched = ary
+      @url, @links, @code, @visited, @depth, @referer, @redirect_to, @response_time, @fetched = ary
     end
 
     def to_hash
       {'url' => @url.to_s,
-       'headers' => Marshal.dump(@headers),
-       'data' => Marshal.dump(@data),
-       'body' => @body,
-       'links' => links.map(&:to_s), 
+       'links' => links.map(&:to_s),
        'code' => @code,
        'visited' => @visited,
        'depth' => @depth,
@@ -197,10 +192,7 @@ module Anemone
 
     def self.from_hash(hash)
       page = self.new(URI(hash['url']))
-      {'@headers' => Marshal.load(hash['headers']),
-       '@data' => Marshal.load(hash['data']),
-       '@body' => hash['body'],
-       '@links' => hash['links'].map { |link| URI(link) },
+      {'@links' => hash['links'].map { |link| URI(link) },
        '@code' => hash['code'].to_i,
        '@visited' => hash['visited'],
        '@depth' => hash['depth'].to_i,

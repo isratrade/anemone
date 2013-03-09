@@ -33,9 +33,7 @@ module Anemone
         url = URI(url) unless url.is_a?(URI)
         pages = []
         get(url, referer) do |response, code, location, redirect_to, response_time|
-          pages << Page.new(location, :body => response.body.dup,
-                                      :code => code,
-                                      :headers => response.to_hash,
+          pages << Page.new(location, :code => code,
                                       :referer => referer,
                                       :depth => depth,
                                       :redirect_to => redirect_to,
@@ -169,7 +167,7 @@ module Anemone
         http.verify_mode = OpenSSL::SSL::VERIFY_NONE
       end
 
-      @connections[url.host][url.port] = http.start 
+      @connections[url.host][url.port] = http.start
     end
 
     def verbose?

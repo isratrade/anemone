@@ -28,10 +28,12 @@ module Anemone
     DEFAULT_OPTS = {
       # run 4 Tentacle threads to fetch pages
       :threads => 4,
+      # Prevent page_queue from using excessive RAM. Can indirectly limit rate of crawling. You'll additionally want to use discard_page_bodies and/or a non-memory 'storage' option
+      :max_page_queue_size => 100,
       # disable verbose output
       :verbose => false,
       # don't throw away the page response body after scanning it for links
-      :discard_page_bodies => false,
+      :discard_page_bodies => true,
       # identify self as Anemone/VERSION
       :user_agent => "Anemone/#{Anemone::VERSION}",
       # no delay between requests
@@ -50,7 +52,7 @@ module Anemone
       :accept_cookies => false,
       # skip any link with a query string? e.g. http://foo.com/?u=user
       :skip_query_strings => false,
-      # proxy server hostname 
+      # proxy server hostname
       :proxy_host => nil,
       # proxy server port number
       :proxy_port => false,
@@ -152,7 +154,7 @@ module Anemone
       return if @urls.empty?
 
       link_queue = Queue.new
-      page_queue = Queue.new
+      page_queue = SizedQueue.new(@opts[:max_page_queue_size])
 
       @opts[:threads].times do
         @tentacles << Thread.new { Tentacle.new(link_queue, page_queue, @opts).run }
@@ -281,7 +283,7 @@ module Anemone
         false
       end
     end
-    
+
     #
     # Returns +true+ if *link* should not be visited because
     # it has a query string and +skip_query_strings+ is true.
